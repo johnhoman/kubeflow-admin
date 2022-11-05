@@ -13,7 +13,7 @@ const (
 )
 
 type Profile struct {
-	obj map[string]interface{}
+	obj map[string]any
 }
 
 func (p *Profile) GetOwner() (*rbacv1.Subject, error) {
@@ -59,7 +59,7 @@ func NewFromUnstructured(u *unstructured.Unstructured) (*Profile, error) {
 }
 
 func NewUnstructured() *unstructured.Unstructured {
-	return &unstructured.Unstructured{Object: map[string]interface{}{
+	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": GroupVersion.String(),
 		"kind": Kind,
 	}}

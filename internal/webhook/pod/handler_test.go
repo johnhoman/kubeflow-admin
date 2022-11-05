@@ -33,7 +33,7 @@ func TestHandler_Handle(t *testing.T) {
             want: []jsonpatch.JsonPatchOperation{{
                 Operation: "add",
                 Path: "/metadata/annotations",
-                Value: map[string]interface{}{"foo": "bar"},
+                Value: map[string]any{"foo": "bar"},
             }},
         },
     }

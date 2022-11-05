@@ -46,8 +46,8 @@ func Mutate(ctx context.Context, reader client.Reader, pod *corev1.Pod) error {
     }
 
     sort.Slice(defaults, func(i, j int) bool {
-        // Sort in reverse alphabetical order, so that the pod default
-        // that has the lowest value gets chosen
+        // Sort in reverse alphabetical order, so that the pod defaults
+        // sorted lexicographically will take priority
         return defaults[i].Name > defaults[j].Name
     })
     sort.Slice(defaults, func(i, j int) bool {
@@ -99,7 +99,7 @@ func Mutate(ctx context.Context, reader client.Reader, pod *corev1.Pod) error {
 
 // removeNil removes all nil fields from a map. If the nil fields
 // are left, they can cause unwanted deletions in a pod spec when merging
-func removeNil(m mapping) {
+func removeNil(m map[string]any) {
     rv := reflect.ValueOf(m)
     for _, key := range rv.MapKeys() {
         value := rv.MapIndex(key)
@@ -108,11 +108,11 @@ func removeNil(m mapping) {
             continue
         }
         switch t := value.Interface().(type) {
-        case mapping:
+        case map[string]any:
             removeNil(t)
-        case array:
+        case []any:
             for _, lm := range t {
-                m, ok := lm.(mapping)
+                m, ok := lm.(map[string]any)
                 if ok {
                     removeNil(m)
                 }
@@ -120,8 +120,3 @@ func removeNil(m mapping) {
         }
     }
 }
-
-type (
-	array = []interface{}
-    mapping = map[string]interface{}
-)
