@@ -21,7 +21,9 @@ type ClusterSecretSpec struct {
 	// namespaces
 	SecretRef SecretRef `json:"secretRef"`
 
-    Selector            `json:",inline"`
+	// Select a namespace or profile kind and/or name to apply secrets to
+	// +optional
+	Selector Selector `json:"selector,omitempty"`
 }
 
 // +kubebuilder:object:root=true

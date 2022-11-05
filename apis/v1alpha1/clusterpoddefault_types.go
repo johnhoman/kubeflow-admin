@@ -5,7 +5,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
 // ClusterPodDefaultSpec contains the selector and pod spec
 // with the patch to apply to a pod
 type ClusterPodDefaultSpec struct {

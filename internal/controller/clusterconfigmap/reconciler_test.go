@@ -1,4 +1,4 @@
-package clustersecret
+package clusterconfigmap
 
 import (
 	"context"

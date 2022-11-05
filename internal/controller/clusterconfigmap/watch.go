@@ -1,4 +1,4 @@
-package clustersecret
+package clusterconfigmap
 
 import (
 	"context"
@@ -12,19 +12,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
-func NewEnqueueRequestsForClusterSecrets(reader client.Reader) handler.EventHandler {
+func NewEnqueueRequestsForClusterConfigMaps(reader client.Reader) handler.EventHandler {
 	return handler.EnqueueRequestsFromMapFunc(func(o client.Object) []ctrl.Request {
 		ns, ok := o.(*corev1.Namespace)
 		if !ok {
 			return nil
 		}
-		secretList := &v1alpha1.ClusterSecretList{}
-		if err := reader.List(context.Background(), secretList); err != nil {
+		configMapList := &v1alpha1.ClusterConfigMapList{}
+		if err := reader.List(context.Background(), configMapList); err != nil {
 			return nil
 		}
 
 		reqs := make([]ctrl.Request, 0)
-		for _, item := range secretList.Items {
+		for _, item := range configMapList.Items {
 			selector := labels.Everything()
 			if item.Spec.Selector.Namespace != nil {
 				var err error

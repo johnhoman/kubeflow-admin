@@ -31,19 +31,19 @@ func NewEnqueueRequestsForNamespaces(reader client.Reader) handler.EventHandler 
 			// isn't selected by the cluster secret, don't queue. If the secret type is not
 			// .dockerconfigjson, then don't queue
 			owner := metav1.GetControllerOf(obj)
-            if owner == nil {
-                return nil
-            }
-            gv, err := schema.ParseGroupVersion(owner.APIVersion)
-            if err != nil {
-                return nil
-            }
-            if gv.WithKind(owner.Kind).GroupKind() == profile.GroupKind {
-	            switch obj.Type {
-	            case corev1.DockerConfigJsonKey, corev1.DockerConfigKey:
-		            return []ctrl.Request{{NamespacedName: client.ObjectKey{Name: obj.Name}}}
-	            }
-            }
+			if owner == nil {
+				return nil
+			}
+			gv, err := schema.ParseGroupVersion(owner.APIVersion)
+			if err != nil {
+				return nil
+			}
+			if gv.WithKind(owner.Kind).GroupKind() == profile.GroupKind {
+				switch obj.Type {
+				case corev1.DockerConfigJsonKey, corev1.DockerConfigKey:
+					return []ctrl.Request{{NamespacedName: client.ObjectKey{Name: obj.Name}}}
+				}
+			}
 		}
 		return nil
 	})

@@ -61,6 +61,6 @@ func NewFromUnstructured(u *unstructured.Unstructured) (*Profile, error) {
 func NewUnstructured() *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": GroupVersion.String(),
-		"kind": Kind,
+		"kind":       Kind,
 	}}
 }
