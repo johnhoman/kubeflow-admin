@@ -11,11 +11,11 @@ type ClusterPodDefaultSpec struct {
 
 	// Selector selects which pods the PodDefault applies to
 	// +optional
-	Selector *metav1.LabelSelector  `json:"selector,omitempty"`
+	Selector *metav1.LabelSelector `json:"selector,omitempty"`
 
 	// NamespaceSelector selects which pods the PodDefault applies to
 	// +optional
-	NamespaceSelector *metav1.LabelSelector  `json:"namespaceSelector,omitempty"`
+	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
 
 	// Priority is the order in which the pod defaults will be applied. Higher priority
 	// means it will be applied last

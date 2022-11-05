@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	errPodDefaultList = "could not list pod defaults"
-	errConvertFromPod = "failed to convert pod to unstructured"
-	errConvertToPod   = "failed to convert pod from unstructured"
-	errReadNamespace  = "failed to read pod namespace from cluster"
+	errPodDefaultList              = "could not list pod defaults"
+	errConvertFromPod              = "failed to convert pod to unstructured"
+	errConvertToPod                = "failed to convert pod from unstructured"
+	errReadNamespace               = "failed to read pod namespace from cluster"
 	errFmtNamespaceSelectorConvert = "failed to convert namespace selector from ClusterPodDefault %s"
 )
 
@@ -51,7 +51,7 @@ func Mutate(ctx context.Context, reader client.Reader, pod *corev1.Pod) error {
 				return errors.Wrapf(err, errFmtNamespaceSelectorConvert, item.Name)
 			}
 		}
-		if selector.Matches(labels.Set(pod.Labels)) && nsSelector.Matches(labels.Set(ns.Labels)){
+		if selector.Matches(labels.Set(pod.Labels)) && nsSelector.Matches(labels.Set(ns.Labels)) {
 			defaults = append(defaults, item.DeepCopy())
 		}
 	}
