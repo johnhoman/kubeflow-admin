@@ -8,10 +8,22 @@ import (
 // ClusterPodDefaultSpec contains the selector and pod spec
 // with the patch to apply to a pod
 type ClusterPodDefaultSpec struct {
-	Selector          *metav1.LabelSelector  `json:"selector,omitempty"`
+
+	// Selector selects which pods the PodDefault applies to
+	// +optional
+	Selector *metav1.LabelSelector  `json:"selector,omitempty"`
+
+	// NamespaceSelector selects which pods the PodDefault applies to
+	// +optional
 	NamespaceSelector *metav1.LabelSelector  `json:"namespaceSelector,omitempty"`
-	Priority          *int                   `json:"priority,omitempty"`
-	Template          corev1.PodTemplateSpec `json:"template,omitempty"`
+
+	// Priority is the order in which the pod defaults will be applied. Higher priority
+	// means it will be applied last
+	Priority *int `json:"priority,omitempty"`
+
+	// Template is a PodTemplateSpec that will be merged with the Pod. The merge uses a
+	// StrategicMergePatch strategy
+	Template corev1.PodTemplateSpec `json:"template,omitempty"`
 }
 
 // ClusterPodDefault configures an admission webhook with defaults to apply

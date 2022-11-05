@@ -226,6 +226,57 @@ func Test_Mutate(t *testing.T) {
 				},
 			},
 		},
+		"CanIgnoreNamespacesWithASelector": {
+			original: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "foo",
+					Namespace: "bar",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name:  "foo",
+						Image: "python:3.9",
+					}},
+				},
+			},
+			objects: []client.Object{
+				&corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "bar",
+					},
+				},
+				&v1alpha1.ClusterPodDefault{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Spec: v1alpha1.ClusterPodDefaultSpec{
+						Selector: &metav1.LabelSelector{},
+						NamespaceSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								"foo": "bar",
+							},
+						},
+						Template: corev1.PodTemplateSpec{
+							Spec: corev1.PodSpec{
+								ServiceAccountName: "foo-user",
+							},
+						},
+					},
+				},
+			},
+			want: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "foo",
+					Namespace: "bar",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name:  "foo",
+						Image: "python:3.9",
+					}},
+				},
+			},
+		},
 	}
 
 	qt.Assert(t, v1alpha1.AddToScheme(scheme.Scheme), qt.IsNil)
