@@ -25,24 +25,24 @@ func TestReconciler(t *testing.T) {
 	ctx := context.Background()
 
 	cases := map[string]struct {
-		clusterSecret *v1alpha1.ClusterSecret
-		objects       []client.Object
-		want          []*corev1.Secret
-		dontWant      []*corev1.Secret
+		clusterConfigMap *v1alpha1.ClusterConfigMap
+		objects          []client.Object
+		want             []*corev1.ConfigMap
+		dontWant         []*corev1.ConfigMap
 	}{
 		"CreatesOwnedSecret": {
-			clusterSecret: &v1alpha1.ClusterSecret{
+			clusterConfigMap: &v1alpha1.ClusterConfigMap{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: v1alpha1.SchemaGroupVersion.String(),
-					Kind:       v1alpha1.ClusterSecretKind,
+					Kind:       v1alpha1.ClusterConfigMapKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "foo-secret",
+					Name: "foo-cm",
 					UID:  types.UID("af452288-2cb8-4c0e-8f82-d4f1bdff9a55"),
 				},
-				Spec: v1alpha1.ClusterSecretSpec{
-					SecretRef: v1alpha1.SecretRef{
-						Name:      "ref-secret",
+				Spec: v1alpha1.ClusterConfigMapSpec{
+					ConfigMapRef: v1alpha1.ConfigMapRef{
+						Name:      "ref-config-map",
 						Namespace: "kubeflow-0",
 					},
 				},
@@ -64,115 +64,32 @@ func TestReconciler(t *testing.T) {
 						},
 					},
 				},
-				&corev1.Secret{
+				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ref-secret",
+						Name:      "ref-config-map",
 						Namespace: "kubeflow-0",
 					},
-					Type: corev1.DockerConfigJsonKey,
+					Data: map[string]string{"foo": "bar"},
 				},
 			},
-			want: []*corev1.Secret{{
+			want: []*corev1.ConfigMap{{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo-secret",
+					Name:      "foo-cm",
 					Namespace: "bar-namespace",
 					Labels: map[string]string{
 						"admin.kubeflow.org/claim-namespace": "bar-namespace",
-						"app.kubernetes.io/managed-by":       "foo-secret",
+						"app.kubernetes.io/managed-by":       "foo-cm",
 					},
 					OwnerReferences: []metav1.OwnerReference{{
 						BlockOwnerDeletion: pointer.Bool(true),
 						Controller:         pointer.Bool(true),
-						Name:               "foo-secret",
+						Name:               "foo-cm",
 						UID:                types.UID("af452288-2cb8-4c0e-8f82-d4f1bdff9a55"),
 						APIVersion:         "admin.kubeflow.org/v1alpha1",
-						Kind:               "ClusterSecret",
+						Kind:               "ClusterConfigMap",
 					}},
 				},
-				Type: corev1.DockerConfigJsonKey,
-			}, {
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo-secret",
-					Namespace: "baz-namespace",
-					Labels: map[string]string{
-						"admin.kubeflow.org/claim-namespace": "baz-namespace",
-						"app.kubernetes.io/managed-by":       "foo-secret",
-					},
-					OwnerReferences: []metav1.OwnerReference{{
-						BlockOwnerDeletion: pointer.Bool(true),
-						Controller:         pointer.Bool(true),
-						Name:               "foo-secret",
-						UID:                types.UID("af452288-2cb8-4c0e-8f82-d4f1bdff9a55"),
-						APIVersion:         "admin.kubeflow.org/v1alpha1",
-						Kind:               "ClusterSecret",
-					}},
-				},
-				Type: corev1.DockerConfigJsonKey,
-			}},
-		},
-		"IgnoresNamespacesNotOwnedByProfile": {
-			clusterSecret: &v1alpha1.ClusterSecret{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: v1alpha1.SchemaGroupVersion.String(),
-					Kind:       v1alpha1.ClusterSecretKind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "foo-secret",
-					UID:  types.UID("af452288-2cb8-4c0e-8f82-d4f1bdff9a55"),
-				},
-				Spec: v1alpha1.ClusterSecretSpec{
-					SecretRef: v1alpha1.SecretRef{
-						Name:      "ref-secret",
-						Namespace: "kubeflow-0",
-					},
-				},
-			},
-			objects: []client.Object{
-				&corev1.Namespace{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "bar-namespace",
-						Labels: map[string]string{
-							"app.kubernetes.io/part-of": "kubeflow-profile",
-						},
-					},
-				},
-				&corev1.Namespace{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "baz-namespace",
-					},
-				},
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ref-secret",
-						Namespace: "kubeflow-0",
-					},
-					Type: corev1.DockerConfigJsonKey,
-				},
-			},
-			want: []*corev1.Secret{{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo-secret",
-					Namespace: "bar-namespace",
-					Labels: map[string]string{
-						"admin.kubeflow.org/claim-namespace": "bar-namespace",
-						"app.kubernetes.io/managed-by":       "foo-secret",
-					},
-					OwnerReferences: []metav1.OwnerReference{{
-						BlockOwnerDeletion: pointer.Bool(true),
-						Controller:         pointer.Bool(true),
-						Name:               "foo-secret",
-						UID:                types.UID("af452288-2cb8-4c0e-8f82-d4f1bdff9a55"),
-						APIVersion:         "admin.kubeflow.org/v1alpha1",
-						Kind:               "ClusterSecret",
-					}},
-				},
-				Type: corev1.DockerConfigJsonKey,
-			}},
-			dontWant: []*corev1.Secret{{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo-secret",
-					Namespace: "baz-namespace",
-				},
+				Data: map[string]string{"foo": "bar"},
 			}},
 		},
 	}
@@ -184,7 +101,7 @@ func TestReconciler(t *testing.T) {
 
 			k8s := fake.NewClientBuilder().
 				WithScheme(scheme.Scheme).
-				WithObjects(subtest.clusterSecret).
+				WithObjects(subtest.clusterConfigMap).
 				WithObjects(subtest.objects...).
 				Build()
 
@@ -195,21 +112,21 @@ func TestReconciler(t *testing.T) {
 				logger: logging.NewLogrLogger(zl),
 				record: event.NewNopRecorder(),
 			}
-			req := ctrl.Request{NamespacedName: client.ObjectKeyFromObject(subtest.clusterSecret)}
+			req := ctrl.Request{NamespacedName: client.ObjectKeyFromObject(subtest.clusterConfigMap)}
 			_, err := reconciler.Reconcile(ctx, req)
 			qt.Assert(t, err, qt.IsNil)
 
 			for _, want := range subtest.want {
-				got := &corev1.Secret{}
+				got := &corev1.ConfigMap{}
 				qt.Assert(t, k8s.Get(ctx, client.ObjectKeyFromObject(want), got), qt.IsNil)
 				qt.Assert(t, got, qt.CmpEquals(
-					cmpopts.IgnoreUnexported(corev1.Secret{}),
-					cmpopts.IgnoreFields(corev1.Secret{}, "ResourceVersion", "TypeMeta"),
+					cmpopts.IgnoreUnexported(corev1.ConfigMap{}),
+					cmpopts.IgnoreFields(corev1.ConfigMap{}, "ResourceVersion", "TypeMeta"),
 				), want)
 			}
 			for _, want := range subtest.dontWant {
 				key := client.ObjectKeyFromObject(want)
-				qt.Assert(t, apierrors.IsNotFound(k8s.Get(ctx, key, &corev1.Secret{})), qt.IsTrue,
+				qt.Assert(t, apierrors.IsNotFound(k8s.Get(ctx, key, &corev1.ConfigMap{})), qt.IsTrue,
 					qt.Commentf("expected secret not to exist in namespace: %s", want.Namespace),
 				)
 			}

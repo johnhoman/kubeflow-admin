@@ -14,6 +14,7 @@ import (
 
 func NewEnqueueRequestsForClusterConfigMaps(reader client.Reader) handler.EventHandler {
 	return handler.EnqueueRequestsFromMapFunc(func(o client.Object) []ctrl.Request {
+
 		ns, ok := o.(*corev1.Namespace)
 		if !ok {
 			return nil

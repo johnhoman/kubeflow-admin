@@ -2,6 +2,7 @@ package imagepullsecrets
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -25,7 +26,7 @@ const (
 )
 
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	name := "kubeflow-ext/service-account"
+	name := fmt.Sprintf("%s/service-account/image-pull-secrets", v1alpha1.Group)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Namespace{}).

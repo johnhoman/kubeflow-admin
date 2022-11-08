@@ -30,8 +30,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	name := "kubeflow-ext/service-account"
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.ClusterSecret{}).
-		Owns(&corev1.Secret{}).
+		For(&v1alpha1.ClusterConfigMap{}).
+		Owns(&corev1.ConfigMap{}).
 		Watches(
 			&source.Kind{Type: &corev1.Namespace{}},
 			NewEnqueueRequestsForClusterConfigMaps(mgr.GetClient()),
@@ -76,17 +76,17 @@ type Reconciler struct {
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
-	clusterSecret := &v1alpha1.ClusterSecret{}
-	if err := r.client.Get(ctx, req.NamespacedName, clusterSecret); err != nil {
+	clusterConfigMap := &v1alpha1.ClusterConfigMap{}
+	if err := r.client.Get(ctx, req.NamespacedName, clusterConfigMap); err != nil {
 		return ctrl.Result{}, errors.Wrap(client.IgnoreNotFound(err), "could not read namespace")
 	}
 
 	nsSelector := labels.Everything()
-	if clusterSecret.Spec.Selector.Namespace != nil {
+	if clusterConfigMap.Spec.Selector.Namespace != nil {
 		// If the spec doesn't specify a selector, then choose every
 		// namespace by default
 		var err error
-		nsSelector, err = metav1.LabelSelectorAsSelector(clusterSecret.Spec.Selector.Namespace)
+		nsSelector, err = metav1.LabelSelectorAsSelector(clusterConfigMap.Spec.Selector.Namespace)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -102,7 +102,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		if item.Labels == nil || item.Labels["app.kubernetes.io/part-of"] != "kubeflow-profile" {
 			continue
 		}
-		selector := clusterSecret.Spec.Selector.Subject
+		selector := clusterConfigMap.Spec.Selector.Subject
 		if selector == nil {
 			namespaces.Insert(item.Name)
 		} else {
@@ -135,35 +135,34 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
-	ref := &corev1.Secret{}
-	ref.SetName(clusterSecret.Spec.SecretRef.Name)
-	ref.SetNamespace(clusterSecret.Spec.SecretRef.Namespace)
+	ref := &corev1.ConfigMap{}
+	ref.SetName(clusterConfigMap.Spec.ConfigMapRef.Name)
+	ref.SetNamespace(clusterConfigMap.Spec.ConfigMapRef.Namespace)
 	if err := r.client.Get(ctx, client.ObjectKeyFromObject(ref), ref); err != nil {
 		return ctrl.Result{}, errors.Wrap(err, errReadReferencedSecret)
 	}
 
-	controllerRef := metav1.NewControllerRef(clusterSecret,
-		v1alpha1.SchemaGroupVersion.WithKind(v1alpha1.ClusterSecretKind),
+	controllerRef := metav1.NewControllerRef(clusterConfigMap,
+		v1alpha1.SchemaGroupVersion.WithKind(v1alpha1.ClusterConfigMapKind),
 	)
 
 	// Create all secrets that should exist in selected namespaces
 	for namespace := range namespaces {
-		secret := &corev1.Secret{}
-		secret.SetName(clusterSecret.Name)
-		secret.SetNamespace(namespace)
+		configMap := &corev1.ConfigMap{}
+		configMap.SetName(clusterConfigMap.Name)
+		configMap.SetNamespace(namespace)
 
-		res, err := controllerutil.CreateOrPatch(ctx, r.client, secret, func() error {
-			secret.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
-			secret.Type = ref.Type
-			secret.Data = ref.Data
-			secret.StringData = ref.StringData
+		res, err := controllerutil.CreateOrPatch(ctx, r.client, configMap, func() error {
+			configMap.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
+			configMap.Data = ref.Data
+			configMap.BinaryData = ref.BinaryData
 			// Skip immutable, that should be enforced at the reference secret level
 
-			if secret.Labels == nil {
-				secret.Labels = make(map[string]string)
+			if configMap.Labels == nil {
+				configMap.Labels = make(map[string]string)
 			}
-			secret.Labels["app.kubernetes.io/managed-by"] = controllerRef.Name
-			secret.Labels["admin.kubeflow.org/claim-namespace"] = namespace
+			configMap.Labels["app.kubernetes.io/managed-by"] = controllerRef.Name
+			configMap.Labels["admin.kubeflow.org/claim-namespace"] = namespace
 			return nil
 		})
 		if err != nil {
@@ -196,13 +195,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// Delete all secrets that shouldn't exist in namespaces
-	secretList := &corev1.SecretList{}
-	if err := r.client.List(ctx, secretList, client.MatchingLabelsSelector{Selector: selector}); err != nil {
+	configMapList := &corev1.ConfigMapList{}
+	if err := r.client.List(ctx, configMapList, client.MatchingLabelsSelector{Selector: selector}); err != nil {
 		return ctrl.Result{}, errors.New(errListNamespaces)
 	}
-	for _, secret := range secretList.Items {
-		r.logger.Debug("removing orphaned secret", "namespace", secret.Namespace)
-		if err := r.client.Delete(ctx, &secret); client.IgnoreNotFound(err) != nil {
+	for _, configMap := range configMapList.Items {
+		r.logger.Debug("removing orphaned configMap", "namespace", configMap.Namespace)
+		if err := r.client.Delete(ctx, &configMap); client.IgnoreNotFound(err) != nil {
 			return ctrl.Result{}, err
 		}
 	}

@@ -1,6 +1,6 @@
 // Package v1alpha1 contains API Schema definitions for the kubeflow-ext v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=contrib.kubeflow.org
+// +kubebuilder:object:generate=true
+// +groupName=admin.kubeflow.org
 
 package v1alpha1
 
@@ -28,13 +28,19 @@ var (
 
 	// ClusterSecretKind is the string representation of the ClusterSecret TypeMeta Kind field
 	ClusterSecretKind = reflect.TypeOf(&ClusterSecret{}).Elem().Name()
+
+	// ClusterConfigMapKind is the string representation of the ClusterConfigMap TypeMeta Kind field
+	ClusterConfigMapKind = reflect.TypeOf(&ClusterConfigMap{}).Elem().Name()
 )
 
 func init() {
 	SchemeBuilder.Register(
-		&ClusterSecret{},
-		&ClusterSecretList{},
+		&ClusterConfigMap{},
+		&ClusterConfigMapList{},
 		&ClusterPodDefault{},
 		&ClusterPodDefaultList{},
+		&ClusterSecret{},
+		&ClusterSecretList{},
+		&ProfileConfig{},
 	)
 }

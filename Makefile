@@ -1,7 +1,7 @@
 GITHUB_REF_NAME ?= $(shell git describe --tags --dirty --always | sed 's/^v//g')
 
 # Image URL to use all building/pushing image targets
-IMG ?= jackhoman/kubeflow-ext:$(GITHUB_REF_NAME)
+IMG ?= jackhoman/kubeflow-admin:$(GITHUB_REF_NAME)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
 
@@ -59,6 +59,9 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" ACK_GINKGO_DEPRECATIONS=1.16.5 go test ./... -coverprofile cover.out
+
+lint:
+	golangci-lint run ./...
 
 ##@ Build
 

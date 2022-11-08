@@ -1,0 +1,23 @@
+package: ack
+typeName: Policy
+attributes:
+- name: Name
+  nameLower: name
+  type: string
+  path: [spec]
+- name: Path
+  nameLower: path
+  type: string
+  path: [spec]
+- name: Description
+  nameLower: description
+  type: string
+  path: [spec]
+- name: PolicyDocument
+  nameLower: policyDocument
+  type: string
+  path: [spec]
+- name: Arn
+  nameLower: arn
+  type: string
+  path: [status, ackResourceMetadata]

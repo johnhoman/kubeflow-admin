@@ -82,24 +82,9 @@ func Mutate(ctx context.Context, reader client.Reader, pod *corev1.Pod) error {
 	}
 	errs = make([]error, 0)
 	for _, def := range defaults {
-
-		from, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&def.Spec.Template)
+		podMap, err = merge(podMap, def.Spec.Template)
 		if err != nil {
 			errs = append(errs, err)
-			continue
-		}
-		removeNil(from)
-
-		schema, err := strategicpatch.NewPatchMetaFromStruct(&corev1.PodTemplateSpec{})
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		podMap, err = strategicpatch.StrategicMergeMapPatchUsingLookupPatchMeta(podMap, from, schema)
-		if err != nil {
-			errs = append(errs, err)
-			continue
 		}
 	}
 	if len(errs) > 0 {
@@ -133,4 +118,23 @@ func removeNil(m map[string]any) {
 			}
 		}
 	}
+}
+
+func merge(into map[string]any, template corev1.PodTemplateSpec) (map[string]any, error) {
+	from, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&template)
+	if err != nil {
+		return nil, err
+	}
+	removeNil(from)
+
+	schema, err := strategicpatch.NewPatchMetaFromStruct(&corev1.PodTemplateSpec{})
+	if err != nil {
+		return nil, err
+	}
+
+	into, err = strategicpatch.StrategicMergeMapPatchUsingLookupPatchMeta(into, from, schema)
+	if err != nil {
+		return nil, err
+	}
+	return into, nil
 }
