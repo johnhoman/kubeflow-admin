@@ -1,1 +1,1 @@
-# TODO: Rename to Kubeflow Cluster Manager
+# Kubeflow Cluster Manager
